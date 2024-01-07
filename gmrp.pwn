@@ -13,9 +13,9 @@
 #include <mxdate>
 #include <streamer>
 
-#define SERVER_NAME     "Name Server RP"
-#define SERVER_NAME2    "Name Server"
-#define GAMEMODE_NAME   "SAMP 0.3.7"
+#define SERVER_NAME     "MegaMozg Rp"
+#define SERVER_NAME2    "MegaMozg Rp"
+#define GAMEMODE_NAME   "MegaMozg"
 
 #define bonuslevel      1
 #define bonusmoney      0
@@ -37,8 +37,11 @@
 
 forward player_kick(playerid); public player_kick(playerid) Kick(playerid);
 #define pKick(%1) SetTimerEx("player_kick", 200, false, "i", %1)
+#define COLOR_GREEN 0x00FF00FF // ????????? ????.
+
 
 main() print("Gamemode successfully loaded.");
+
 
 new MySQL:dbHandle;
 
@@ -83,20 +86,24 @@ new attemplogin[MAX_PLAYERS];
 new last_pick[MAX_PLAYERS];
 new rentplayercar[MAX_PLAYERS];
 
+
+new Float:GruzX[MAX_PICKUPS], Float:GruzY[MAX_PICKUPS], Float:GruzZ[MAX_PICKUPS];
+
 new arendbike[2];
+new Float:Gruz[MAX_PICKUPS];
 
 public OnGameModeInit()
 {
-	SetGameModeText(""GAMEMODE_NAME"");
-	SendRconCommand("hostname "SERVER_NAME"");
+	SetGameModeText("GAMEMODE_NAME");
+	SendRconCommand("hostname SERVER_NAME");
 	DisableInteriorEnterExits();
 	EnableStuntBonusForAll(0);
 	dbHandle = mysql_connect(MySQL_HOST, MySQL_USER, MySQL_PASS, MySQL_BASE);
 	SetTimer("update_second", 1000, true);
 	load();
+
 	return 1;
 }
-
 public OnGameModeExit()
 {
  	SetGameModeText("Blank Script");
@@ -204,6 +211,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 		        PutPlayerInVehicle(playerid, rentplayercar[playerid], 0);
 		        SendClientMessage(playerid, SERVER_COLOR, "Вам был выдан мопед.");
 		    }
+
 		}
 	}
 	return 1;
@@ -285,7 +293,7 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 
 public OnPlayerEnterCheckpoint(playerid)
 {
-	return 1;
+    return 1;
 }
 
 public OnPlayerLeaveCheckpoint(playerid)
@@ -325,22 +333,29 @@ public OnPlayerObjectMoved(playerid, objectid)
 
 public OnPlayerPickUpDynamicPickup(playerid, pickupid)
 {
-	if(pickupid == arendbike[0])
-	{
-	    if(last_pick[playerid] > gettime()) return 1;
-	    if(rentplayercar[playerid] != 0) { DestroyVehicle(rentplayercar[playerid]); rentplayercar[playerid] = 0; SendClientMessage(playerid, COLOR_GREY, "Ваш арендованый мобед был удален!"); return 1; }
-	    ShowPlayerDialog(playerid, 9999, DIALOG_STYLE_MSGBOX, "{A70000}Аренда мопедов",
-		"\
-			{FFFFFF}Аренда мопедов.\n\n\
-			Информация:\n\
-			-Если арендованый транспорт не будет использоваться в течении 5-ть минут.\n\
-			-Он будет удален автоматически!\
-		",
-		"Арендовать", "Отмена");
-	    last_pick[playerid] = gettime() + 5;
-	}
-	return 1;
+    if (pickupid == arendbike[0])
+    {
+        if (last_pick[playerid] > gettime()) return 1;
+        if (rentplayercar[playerid] != 0) { DestroyVehicle(rentplayercar[playerid]); rentplayercar[playerid] = 0; SendClientMessage(playerid, COLOR_GREY, "Ваш арендованный мопед был удален!"); return 1; }
+        ShowPlayerDialog(playerid, 9999, DIALOG_STYLE_MSGBOX, "{A70000}Аренда мопедов",
+            "\
+                {FFFFFF}Аренда мопедов.\n\n\
+                Информация:\n\
+                -Если арендованный транспорт не будет использоваться в течении 5-ти минут.\n\
+                -Он будет удален автоматически!\
+            ",
+            "Арендовать", "Отмена");
+        last_pick[playerid] = gettime() + 5;
+    }
+    if (pickupid == Gruz[0])
+    {
+        SendClientMessage(playerid, COLOR_GREEN, " Gruz!");
+        GivePlayerWeapon(playerid, 24, 1);
+        return 1;
+    }
+    return 1;
 }
+
 
 public OnVehicleMod(playerid, vehicleid, componentid)
 {
@@ -571,7 +586,15 @@ stock create_account(playerid, password[])
 stock load()
 {
     arendbike[0] = CreateDynamicPickup(19134, 23, 1659.0771,-1685.1560,21.4306);
+
+    Create3DTextLabel("{EB9500}?????? ??????", -1, 1659.0771,-1685.1560,13.3884, 21.4306, 0, 1);
     
-    Create3DTextLabel("{EB9500}АРЕНДА МОПЕДА", -1, 1659.0771,-1685.1560,13.3884, 21.4306, 0, 1);
+	GruzX[0] = 1658.3070;
+	GruzY[0] = -1692.1095;
+	GruzZ[0] = 15.6094;
+	Gruz[0] = CreateDynamicPickup(1254, 1, GruzX[0], GruzY[0], GruzZ[0], -1);
+	Create3DTextLabel("устроиться на роботу", COLOR_GREEN, GruzX[0], GruzY[0], GruzZ[0], 0, 1);
+
+	return 1;
 }
 
