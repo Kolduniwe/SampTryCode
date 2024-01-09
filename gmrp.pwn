@@ -12,6 +12,8 @@
 #include <zcmd>
 #include <mxdate>
 #include <streamer>
+#include <a_actor>
+
 
 #define SERVER_NAME     "MegaMozg Rp"
 #define SERVER_NAME2    "MegaMozg Rp"
@@ -32,6 +34,7 @@
 #define COLOR_WHITE     0xFFFFFFFF
 #define COLOR_RED       0xFF0000FF
 #define COLOR_GREY      0xC9C9C9FF
+#define COLOR_YELLOW 0xFFFF00AA // 
 
 #define PN(%1) Account[%1][pName]
 
@@ -87,6 +90,10 @@ new last_pick[MAX_PLAYERS];
 new rentplayercar[MAX_PLAYERS];
 
 
+
+
+
+
 new Float:GruzX[MAX_PICKUPS], Float:GruzY[MAX_PICKUPS], Float:GruzZ[MAX_PICKUPS];
 
 new arendbike[2];
@@ -102,7 +109,8 @@ public OnGameModeInit()
 	SetTimer("update_second", 1000, true);
 	load();
 
-	return 1;
+    return 1;
+
 }
 public OnGameModeExit()
 {
@@ -331,30 +339,88 @@ public OnPlayerObjectMoved(playerid, objectid)
 	return 1;
 }
 
+new GruzMessageShown[MAX_PLAYERS];
+new GruzWeaponGiven[MAX_PLAYERS];
+
+
+new jobotaPickupID[3];
+new jobotaPickupsCreated = 0;
+
+
 public OnPlayerPickUpDynamicPickup(playerid, pickupid)
 {
     if (pickupid == arendbike[0])
     {
-        if (last_pick[playerid] > gettime()) return 1;
-        if (rentplayercar[playerid] != 0) { DestroyVehicle(rentplayercar[playerid]); rentplayercar[playerid] = 0; SendClientMessage(playerid, COLOR_GREY, "Ваш арендованный мопед был удален!"); return 1; }
+        if (last_pick[playerid] > gettime())
+            return 1;
+
+        if (rentplayercar[playerid] != 0)
+        {
+            DestroyVehicle(rentplayercar[playerid]);
+            rentplayercar[playerid] = 0;
+            SendClientMessage(playerid, COLOR_GREY, "Ваш арендованный мопед был удален!");
+            return 1;
+        }
+
         ShowPlayerDialog(playerid, 9999, DIALOG_STYLE_MSGBOX, "{A70000}Аренда мопедов",
             "\
                 {FFFFFF}Аренда мопедов.\n\n\
                 Информация:\n\
-                -Если арендованный транспорт не будет использоваться в течении 5-ти минут.\n\
-                -Он будет удален автоматически!\
+                - Если арендованный транспорт не будет использоваться в течении 5-ти минут,\n\
+                - Он будет удален автоматически!\
             ",
             "Арендовать", "Отмена");
+
         last_pick[playerid] = gettime() + 5;
     }
+
     if (pickupid == Gruz[0])
     {
-        SendClientMessage(playerid, COLOR_GREEN, " Gruz!");
-        GivePlayerWeapon(playerid, 24, 1);
+        if (!GruzMessageShown[playerid])
+        {
+            SendClientMessage(playerid, COLOR_GREEN, "Gruz!");
+            GruzMessageShown[playerid] = 1;
+        }
+
+        GivePlayerWeapon(playerid, 12, 1);
+        GivePlayerWeapon(playerid, 22, 1);
+        GruzWeaponGiven[playerid] = 1; // Тут ваш комментарий
         return 1;
+    } // Закрываем фигурную скобку для первого блока
+
+    if (pickupid == jobotaPickupID[0] && !jobotaPickupsCreated)
+    {
+        // Обработка поднятия первого пикапа "Jobota"
+        SendClientMessage(playerid, COLOR_YELLOW, "Go to the work");
+
+        // Создаем остальные два пикапа только при поднятии первого
+        jobotaPickupID[1] = CreateDynamicPickup(19605, 1, 1949.7305, -1833.7787, 7.0781);
+        jobotaPickupID[2] = CreateDynamicPickup(2060, 1, 1948.8527, -1839.9474, 3.9844);
+        SetPlayerAttachedObject(playerid, 1, 18634, 14, 0.333391, 0.000000, 0.042249, 358.219909, 268.014739, 170.032974, 2.003867, 1.764811, 1.579773);
+
+        jobotaPickupsCreated = 2;
     }
-    return 1;
-}
+    else if (pickupid == jobotaPickupID[1])
+    {
+        // Обработка входа на второй пикап "Jobota"
+        
+
+        // Применяем анимацию для второго пикапа
+        ApplyAnimation(playerid,"BASEBALL","Bat_4",4.1,0,0,0,1,11000);
+        return 1; // Вернуться после обработки второго пикапа
+    }
+    else if (pickupid == jobotaPickupID[2])
+    {
+        // Обработка входа на третий пикап "Jobota"
+
+
+        // Применяем анимацию для третьего пикапа
+        ClearAnimations(playerid, true);
+        return 1; // Вернуться после обработки третьего пикапа
+    }
+	return 1;
+} // Закрываем фигурную скобку для второго блока
+
 
 
 public OnVehicleMod(playerid, vehicleid, componentid)
@@ -595,6 +661,13 @@ stock load()
 	Gruz[0] = CreateDynamicPickup(1254, 1, GruzX[0], GruzY[0], GruzZ[0], -1);
 	Create3DTextLabel("устроиться на роботу", COLOR_GREEN, GruzX[0], GruzY[0], GruzZ[0], 0, 1);
 
-	return 1;
+// Функция для создания трех пикапов "Jobota"
+
+    // Первый пикап
+    jobotaPickupID[0] = CreateDynamicPickup(1239, 1, 1986.8145,-1856.9623,3.9844);
+    
+
+
+    return 1;
 }
 
