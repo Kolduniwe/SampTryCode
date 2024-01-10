@@ -43,6 +43,15 @@ forward player_kick(playerid); public player_kick(playerid) Kick(playerid);
 #define COLOR_GREEN 0x00FF00FF // ????????? ????.
 
 
+
+
+#pragma tabsize 0
+
+
+#define COLOR_SYSTEM 0xEFEFF7AA
+#define COLOR_LIGHTBLUE 0x33CCFFAA
+
+
 main() print("Gamemode successfully loaded.");
 
 
@@ -89,6 +98,13 @@ new attemplogin[MAX_PLAYERS];
 new last_pick[MAX_PLAYERS];
 new rentplayercar[MAX_PLAYERS];
 
+new jobotaPickupID[3];
+new PlayerInJob2[MAX_PLAYERS];
+new Meshki2[MAX_PLAYERS];
+new Meshok2[MAX_PLAYERS];
+new Oldskin1[MAX_PLAYERS];
+
+
 
 
 
@@ -99,14 +115,36 @@ new Float:GruzX[MAX_PICKUPS], Float:GruzY[MAX_PICKUPS], Float:GruzZ[MAX_PICKUPS]
 new arendbike[2];
 new Float:Gruz[MAX_PICKUPS];
 
+forward PlayerToPoint(Float:radi, playerid, Float:x, Float:y, Float:z);
+public PlayerToPoint(Float:radi, playerid, Float:x, Float:y, Float:z)
+{
+    if(IsPlayerConnected(playerid))
+	{
+		new Float:oldposx, Float:oldposy, Float:oldposz;
+		new Float:tempposx, Float:tempposy, Float:tempposz;
+		GetPlayerPos(playerid, oldposx, oldposy, oldposz);
+		tempposx = (oldposx -x);
+		tempposy = (oldposy -y);
+		tempposz = (oldposz -z);
+		//printf("DEBUG: X:%f Y:%f Z:%f",posx,posy,posz);
+		if (((tempposx < radi) && (tempposx > -radi)) && ((tempposy < radi) && (tempposy > -radi)) && ((tempposz < radi) && (tempposz > -radi)))
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
 public OnGameModeInit()
 {
-	SetGameModeText("GAMEMODE_NAME");
-	SendRconCommand("hostname SERVER_NAME");
+	SetGameModeText("MEGAMOZG RP");
+	SendRconCommand("hostname MegaMozg RolePlay");
 	DisableInteriorEnterExits();
 	EnableStuntBonusForAll(0);
 	dbHandle = mysql_connect(MySQL_HOST, MySQL_USER, MySQL_PASS, MySQL_BASE);
 	SetTimer("update_second", 1000, true);
+	
+
 	load();
 
     return 1;
@@ -219,9 +257,11 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 		        PutPlayerInVehicle(playerid, rentplayercar[playerid], 0);
 		        SendClientMessage(playerid, SERVER_COLOR, "Вам был выдан мопед.");
 		    }
-
 		}
-	}
+
+
+
+ }
 	return 1;
 }
 
@@ -242,6 +282,13 @@ public OnPlayerConnect(playerid)
 public OnPlayerDisconnect(playerid, reason)
 {
 	attemplogin[playerid] = 0;
+	PlayerInJob2[playerid] = 0;
+	Meshok2[playerid] = 0;
+    Meshki2[playerid] = 0;
+    Oldskin1[playerid] = 0;
+
+
+	
 	return 1;
 }
 
@@ -301,8 +348,33 @@ public OnPlayerStateChange(playerid, newstate, oldstate)
 
 public OnPlayerEnterCheckpoint(playerid)
 {
+    new string[256];
+
+    
+    if(PlayerToPoint(2.0, playerid,1949.7305, -1833.7787, 7.0781))
+	  {
+	  Meshok2[playerid] = 1;
+   ApplyAnimation(playerid,"CARRY","crry_prtial",4.1,0,1,1,1,1);
+	  SetPlayerAttachedObject(playerid, 2, 2060, 5, 0.01, 0.1, 0.2, 100, 10, 85);
+    SetPlayerCheckpoint(playerid,1948.8527, -1839.9474, 3.9844,2.0);
+    }
+
+    if(PlayerToPoint(2.0, playerid,1948.8527, -1839.9474, 3.9844))
+	  {
+	  Meshok2[playerid] = 0;
+	  ApplyAnimation(playerid,"PED","IDLE_tired",4.1,0,1,1,0,1);
+	  Meshki2[playerid]++;
+	  if(IsPlayerAttachedObjectSlotUsed(playerid,2)) RemovePlayerAttachedObject(playerid,2);
+	  format(string, sizeof(string), "Мешков перетащено {A52A2A}%d",Meshki2[playerid]);
+	  SendClientMessage(playerid, COLOR_SYSTEM, string);
+    SetPlayerCheckpoint(playerid,1949.7305, -1833.7787, 7.0781,2.0);
+    GivePlayerMoney(playerid, Meshki2[playerid]*5); // 
+    format(string, sizeof(string), "{FFFAFA}Вы получили {228B22}%d$ {FFFAFA}за {A52A2A}%d {FFFAFA}мешка(ов)",Meshki2[playerid]*5,Meshki2[playerid]);
+    }
+
     return 1;
 }
+
 
 public OnPlayerLeaveCheckpoint(playerid)
 {
@@ -343,9 +415,18 @@ new GruzMessageShown[MAX_PLAYERS];
 new GruzWeaponGiven[MAX_PLAYERS];
 
 
-new jobotaPickupID[3];
-new jobotaPickupsCreated = 0;
 
+
+
+forward OnPlayerPickUpPickup(playerid, pickupid);
+public OnPlayerPickUpPickup(playerid, pickupid)
+{
+
+
+
+	
+	return 1;
+  }
 
 public OnPlayerPickUpDynamicPickup(playerid, pickupid)
 {
@@ -374,50 +455,74 @@ public OnPlayerPickUpDynamicPickup(playerid, pickupid)
         last_pick[playerid] = gettime() + 5;
     }
 
+    
+    
+
     if (pickupid == Gruz[0])
     {
         if (!GruzMessageShown[playerid])
         {
-            SendClientMessage(playerid, COLOR_GREEN, "Gruz!");
+            SendClientMessage(playerid, COLOR_GREEN, "Здесь Можно купить оружие!");
             GruzMessageShown[playerid] = 1;
         }
-
-        GivePlayerWeapon(playerid, 12, 1);
+        if (GetPlayerMoney(playerid) >= 1)
+		{
+		GivePlayerMoney(playerid, -1); // Снимаем 1 виртуальную денежную единицу
+        GivePlayerWeapon(playerid, 10, 1);
         GivePlayerWeapon(playerid, 22, 1);
         GruzWeaponGiven[playerid] = 1; // Тут ваш комментарий
+        }
+    else
+    {
+    if (last_pick[playerid] > gettime())
+	return 1;
+        SendClientMessage(playerid, COLOR_RED, "Идите работать, у вас нет денег!");
+        
+    last_pick[playerid] = gettime() + 5;
+        return 0; // Отменяем действие, так как у игрока нет денег
+    }
         return 1;
     } // Закрываем фигурную скобку для первого блока
 
-    if (pickupid == jobotaPickupID[0] && !jobotaPickupsCreated)
+    if (pickupid == jobotaPickupID[0])
     {
+    if (last_pick[playerid] > gettime())
+            return 1;
         // Обработка поднятия первого пикапа "Jobota"
         SendClientMessage(playerid, COLOR_YELLOW, "Go to the work");
-
-        // Создаем остальные два пикапа только при поднятии первого
-        jobotaPickupID[1] = CreateDynamicPickup(19605, 1, 1949.7305, -1833.7787, 7.0781);
-        jobotaPickupID[2] = CreateDynamicPickup(2060, 1, 1948.8527, -1839.9474, 3.9844);
-        SetPlayerAttachedObject(playerid, 1, 18634, 14, 0.333391, 0.000000, 0.042249, 358.219909, 268.014739, 170.032974, 2.003867, 1.764811, 1.579773);
-
-        jobotaPickupsCreated = 2;
-    }
-    else if (pickupid == jobotaPickupID[1])
-    {
-        // Обработка входа на второй пикап "Jobota"
         
+        PlayerInJob2[playerid] = 1;
 
-        // Применяем анимацию для второго пикапа
-        ApplyAnimation(playerid,"BASEBALL","Bat_4",4.1,0,0,0,1,11000);
-        return 1; // Вернуться после обработки второго пикапа
+        
+        
+        
+        //  PlayerInJob[playerid] = 1;
+	Oldskin1[playerid] = GetPlayerSkin(playerid);
+	SetPlayerSkin(playerid, 16);
+	SetPlayerCheckpoint(playerid,1949.7305,-1833.7787,7.0781,2.0);
+	SendClientMessage(playerid, COLOR_LIGHTBLUE, "На вашей карте отмечен чекпоинт");
+	SendClientMessage(playerid, COLOR_LIGHTBLUE, "Идите к нему чтобы взять мешок");
+	last_pick[playerid] = gettime() + 5;
+	return 1;
+
     }
-    else if (pickupid == jobotaPickupID[2])
+    if (pickupid == jobotaPickupID[1])
     {
-        // Обработка входа на третий пикап "Jobota"
+    new string[128];
+	if (PlayerInJob2[playerid])
+	{
 
-
-        // Применяем анимацию для третьего пикапа
-        ClearAnimations(playerid, true);
-        return 1; // Вернуться после обработки третьего пикапа
+       PlayerInJob2[playerid] = 0;
+	SetPlayerSkin(playerid, Oldskin1[playerid]);
+    DisablePlayerCheckpoint(playerid);
+    format(string, sizeof(string), "{FFFAFA}Вы получили {228B22}%d$ {FFFAFA}за {A52A2A}%d {FFFAFA}мешка(ов)",Meshki2[playerid]*5*3,Meshki2[playerid]);
+    SendClientMessage(playerid, COLOR_SYSTEM, string);
+    Meshki2[playerid] = 0;
     }
+    }
+  
+    
+
 	return 1;
 } // Закрываем фигурную скобку для второго блока
 
@@ -465,8 +570,29 @@ public OnRconLoginAttempt(ip[], password[], success)
 
 public OnPlayerUpdate(playerid)
 {
-	return 1;
+    new animlib[32];
+    new animname[32];
+    
+
+    
+    if(Meshok2[playerid] == 1 && !PlayerToPoint(6.0,playerid,1949.7305, -1833.7787, 7.0781))
+                {
+                        GetAnimationName(GetPlayerAnimationIndex(playerid), animlib, sizeof(animlib), animname, sizeof(animname));//???????? ?? ????????
+                        if(strcmp(animname, "IDLE_STANCE", true) != 0 && strcmp(animname, "RUN_CIVI", true) != 0 && strcmp(animname, "WALK_CIVI", true) != 0 && strcmp(animname, "crry_prtial", true) != 0 && strcmp(animname, "SPRINT_PANIC", true) != 0 && strcmp(animname, "RUN_PLAYER", true) != 0 && strcmp(animname, "WALK_PLAYER", true) != 0 && strcmp(animname, "SPRINT_CIVI", true) != 0)
+                        {
+                         Meshok2[playerid] = 0;
+            SendClientMessage(playerid, COLOR_RED, "Вы уронили мешок!");
+            if (IsPlayerAttachedObjectSlotUsed(playerid, 2)) RemovePlayerAttachedObject(playerid, 2);
+            ApplyAnimation(playerid, "PED", "IDLE_tired", 4.1, 0, 1, 1, 0, 1);
+                    SetPlayerAttachedObject(playerid,1, 18634, 14, 0.333391, 0.000000, 0.042249, 358.219909, 268.014739, 170.032974, 2.003867, 1.764811, 1.579773);// ???? ?????
+                                SetPlayerCheckpoint(playerid,1948.8527, -1839.9474, 3.9844,6.0);
+
+                        }
+                }
+
+    return 1;
 }
+
 
 public OnPlayerStreamIn(playerid, forplayerid)
 {
@@ -665,6 +791,12 @@ stock load()
 
     // Первый пикап
     jobotaPickupID[0] = CreateDynamicPickup(1239, 1, 1986.8145,-1856.9623,3.9844);
+    jobotaPickupID[1] = CreateDynamicPickup(2060, 1, 1992.8214,-1857.6216,3.9844);
+    
+   
+	Create3DTextLabel("[Раздевалка]\nВстань на иконку чтобы надеть рабочую одежду",0x0000FFAA,2137.8227539063,-2282.4379882813,20.671875,40.0,0, 1);
+	Create3DTextLabel("[Касса]\nВстань на иконку чтобы получить зарплату",0x0000FFAA,2127.6430664063,-2275.4113769531,20.671875,40.0,0, 1);
+	Create3DTextLabel("Помощь по работе",0x0000FFAA,2182.0974121094,-2252.8625488281,14.7734375,40.0,0, 1);
     
 
 
